@@ -15,7 +15,8 @@
 typedef struct 
 {
   char *key;
-  char *value;
+  void *value;
+  size_t value_size;
 } ht_item;
 
 typedef struct 
@@ -29,9 +30,9 @@ typedef struct
 
 ht_hash_table *ht_new(int size);
 void ht_del_hash_table(ht_hash_table *ht);
-void ht_insert(ht_hash_table* ht, const char* key, const char* value);
-char* ht_search(ht_hash_table* ht, const char* key);
+void ht_insert(ht_hash_table* ht, const char* key, const void* value,size_t value_size);
+void* ht_search(ht_hash_table* ht, const char* key);
 void ht_delete(ht_hash_table* ht, const char* key);
-void ht_print(ht_hash_table *ht);
+void ht_print(ht_hash_table *ht, char type);
 
 #endif // !HASH_TABLE_H

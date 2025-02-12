@@ -3,13 +3,15 @@
 #include <string.h>
 
 // represent a deleted item
-static ht_item HT_DELETED_ITEM = {NULL, NULL};
+static ht_item HT_DELETED_ITEM = {NULL, NULL, 0};
 
-static ht_item * ht_new_item(const char *k, const char *v)
+static ht_item * ht_new_item(const char *k, const void *v, size_t value_size)
 {
   ht_item *i = malloc(sizeof(ht_item));
   i->key = strdup(k);
-  i->value = strdup(v);
+  i->value = malloc(value_size);
+  memcpy(i->value, v, value_size);
+  i->value_size = value_size;
   return (i);
 }
 
@@ -27,6 +29,8 @@ ht_hash_table *ht_new(int size)
 //delete an item
 static void ht_del_item(ht_item *i)
 {
+  if (i == NULL)
+    return ;
   free(i->key);
   free(i->value);
   free(i);
@@ -103,13 +107,13 @@ static void ht_resize(ht_hash_table *ht, const int new_size)
 }                  
 
 
-void ht_insert(ht_hash_table* ht, const char* key, const char* value)
+void ht_insert(ht_hash_table* ht, const char* key, const void* value, size_t value_size)
 {
   //resize if load factor > 0.5
   if(ht->count > ht->size/2)
     ht_resize(ht, ht->size * 2);
 
-  ht_item *item = ht_new_item(key, value);
+  ht_item *item = ht_new_item(key, value, value_size);
   int index = ht_get_hash(item->key, ht->size, 0);
   ht_item *cur_item = ht->items[index];
   int i = 1;
@@ -131,7 +135,7 @@ void ht_insert(ht_hash_table* ht, const char* key, const char* value)
 
 
 //search function
-char* ht_search(ht_hash_table* ht, const char* key)
+void* ht_search(ht_hash_table* ht, const char* key)
 {
   int index = ht_get_hash(key, ht->size, 0);
   ht_item *item = ht->items[index];
@@ -169,26 +173,29 @@ void ht_delete(ht_hash_table* ht, const char* key)
   }
 }
 
-void ht_print(ht_hash_table *ht)
-{
-  printf("\n===== Hash Table =====\n");
-    for (int i = 0; i < ht->size; i++)
-    {
+
+//only works for int(i), double (d), strings (s) for now
+void ht_print(ht_hash_table* ht, char type) {
+    printf("\n===== Hash Table =====\n");
+    for (int i = 0; i < ht->size; i++) {
         ht_item* item = ht->items[i];
-        if (item == NULL)
-        {
+        if (item == NULL) {
             printf("[%d] EMPTY\n", i);
-        }
-        else if (item == &HT_DELETED_ITEM)
-        {
+        } else if (item == &HT_DELETED_ITEM) {
             printf("[%d] DELETED\n", i);
-        }
-        else
-        {
-            printf("[%d] Key: %s | Value: %s\n", i, item->key, item->value);
+        } else {
+            printf("[%d] Key: %s | Value: ", i, item->key);
+            if (type == 's') {
+                printf("%s", (char*)item->value);
+            } else if (type == 'i') {
+                printf("%d", *(int*)item->value);
+            } else if (type == 'd') {
+                printf("%.2f", *(double*)item->value);
+            } else {
+                printf("[Unknown Type]");
+            }
+            printf("\n");
         }
     }
     printf("=======================\n");
 }
-
-
